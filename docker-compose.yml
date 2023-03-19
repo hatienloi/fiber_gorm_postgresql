@@ -1,0 +1,17 @@
+services:
+  db:
+    container_name: db_go_fiber
+    image: postgres:14.1-alpine
+    volumes:
+      - postgres:/var/lib/postgres/data
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USERNAME: postgres
+      LANG: 'en_US.UTF-8'
+      LANGUAGE: 'en_US:en'
+      LC_ALL: 'en_US.UTF-8'
+
+volumes:
+  postgres:
