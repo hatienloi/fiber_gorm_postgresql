@@ -1,4 +1,4 @@
-package validations
+package handlers
 
 import (
 	"errors"

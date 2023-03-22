@@ -2,12 +2,13 @@ package validations
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/handlers"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/interfaces"
 )
 
 var validate = validator.New()
 
-func ValidateStruct(user interfaces.User) (ValidatorResponseInterface, error) {
+func ValidateStruct(user interfaces.User) (handlers.ValidatorResponseInterface, error) {
 	var errors []interfaces.ErrorResponse
 	err := validate.Struct(user)
 	if err != nil {
@@ -19,5 +20,5 @@ func ValidateStruct(user interfaces.User) (ValidatorResponseInterface, error) {
 			errors = append(errors, element)
 		}
 	}
-	return ValidatorResponse(errors)
+	return handlers.ValidatorResponse(errors)
 }
