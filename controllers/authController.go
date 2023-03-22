@@ -5,7 +5,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/constants"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/database"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/interfaces"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/models"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/validations"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"strings"
@@ -14,17 +16,22 @@ import (
 
 func Register(c *fiber.Ctx) error {
 
-	var data map[string]string
+	data := new(interfaces.User)
 
 	if err := c.BodyParser(&data); err != nil {
 		return err
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	resp, errors := validations.ValidateStruct(*data)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MaxCost)
 
 	user := models.User{
-		Name:         data["name"],
-		Email:        data["email"],
+		Name:         data.Name,
+		Email:        data.Email,
 		PasswordHash: passwordHash,
 	}
 
