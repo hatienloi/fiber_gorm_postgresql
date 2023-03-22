@@ -29,7 +29,7 @@ func GetAllArticle(c *fiber.Ctx) error {
 
 	var articles []models.Article
 
-	database.DB.Model(&models.Article{}).Find(&articles)
+	database.DB.Model(&models.Article{}).Order("updated_at desc").Find(&articles)
 
 	return c.JSON(articles)
 }

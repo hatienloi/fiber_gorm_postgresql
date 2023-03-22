@@ -1,7 +1,7 @@
 services:
   db:
     container_name: db_go_fiber
-    image: postgres:14.1-alpine
+    image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgres/data
     ports:

@@ -21,6 +21,8 @@ func Connect() {
 
 	connection, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
+	connection.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+
 	if err != nil {
 		panic("can not connect to database")
 	}
@@ -33,6 +35,5 @@ func Connect() {
 	if err != nil {
 		panic("can not migrate database")
 	}
-
 	DB = connection
 }

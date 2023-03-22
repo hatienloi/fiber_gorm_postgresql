@@ -19,7 +19,6 @@ func DefaultErrorHandler(ctx *fiber.Ctx, err error) error {
 	if err != nil {
 		// In case the SendFile fails
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message":   e.Message,
 			"errorCode": code,
 		})
 	}

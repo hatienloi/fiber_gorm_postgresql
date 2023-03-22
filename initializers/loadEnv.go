@@ -1,7 +1,6 @@
 package initializers
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 )
@@ -29,5 +28,4 @@ func LoadConfig() {
 	if err != nil {
 		panic("not enough variable environment")
 	}
-	fmt.Println(Config)
 }

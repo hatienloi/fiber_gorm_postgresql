@@ -65,7 +65,10 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	database.DB.Create(&user)
+	err := database.DB.Create(&user).Error
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(err)
+	}
 
 	return c.JSON(user)
 }
@@ -77,15 +80,21 @@ func Login(c *fiber.Ctx) error {
 		return err
 	}
 
-	var user models.User
-	database.DB.Where("email = ?", data["email"]).First(&user)
+	var exists bool
 
-	if user.ID == 0 {
+	// Check exist email
+	database.DB.Model(&models.User{}).Select("count(*) > 0").Where("email = ?", data["email"]).Find(&exists)
+
+	if !exists {
 		c.Status(fiber.StatusNotFound)
 		return c.JSON(fiber.Map{
 			"message": "user not found",
 		})
 	}
+
+	var user models.User
+
+	database.DB.Select([]string{"password_hash", "email"}).Where("email = ?", data["email"]).First(&user)
 
 	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(data["password"]))
 	if err != nil {
@@ -104,7 +113,7 @@ func Login(c *fiber.Ctx) error {
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s) * time.Minute)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		NotBefore: jwt.NewNumericDate(time.Now()),
-		ID:        strconv.Itoa(int(user.ID)),
+		ID:        user.Email,
 	})
 
 	tokenString, err := claims.SignedString(constants.SigningKey)
@@ -140,7 +149,7 @@ func Me(c *fiber.Ctx) error {
 
 	var user models.User
 
-	if err := database.DB.Where("ID = ?", claims.ID).First(&user).Error; err != nil {
+	if err := database.DB.Where("email = ?", claims.ID).First(&user).Error; err != nil {
 		c.Status(fiber.StatusUnauthorized)
 		return c.JSON(fiber.Map{
 			"message": "unauthenticated",
