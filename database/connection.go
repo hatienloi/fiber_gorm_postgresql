@@ -1,6 +1,8 @@
 package database
 
 import (
+	"fmt"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/initializers"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -9,7 +11,13 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	dsn := "host=localhost user=postgres password=postgres dbname=postgres port=5432"
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s",
+		initializers.Config.DBHost,
+		initializers.Config.DBUserName,
+		initializers.Config.DBUserPassword,
+		initializers.Config.DBName,
+		initializers.Config.DBPort,
+	)
 
 	connection, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 

@@ -5,6 +5,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/constants"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/database"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/handlers"
+	"github.com/hatienl0i261299/fiber_gorm_postgresql/initializers"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/interfaces"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/models"
 	"github.com/hatienl0i261299/fiber_gorm_postgresql/validations"
@@ -22,17 +24,45 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 
-	resp, errors := validations.ValidateStruct(*data)
-	if errors != nil {
+	resp, errorValidation := validations.ValidateStruct(*data)
+	if errorValidation != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.MaxCost)
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 
 	user := models.User{
 		Name:         data.Name,
 		Email:        data.Email,
 		PasswordHash: passwordHash,
+	}
+
+	var exists bool
+
+	// Check exist email
+	database.DB.Model(&models.User{}).Select("count(*) > 0").Where("email = ?", data.Email).Find(&exists)
+	if exists {
+		response, _ := handlers.ValidatorResponse([]interfaces.ErrorResponse{
+			interfaces.ErrorResponse{
+				Field:   "User.Email",
+				Message: "email existed",
+				Tag:     "",
+			},
+		})
+		return c.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	// Check exist username
+	database.DB.Model(&models.User{}).Select("count(*) > 0").Where("name = ?", data.Name).Find(&exists)
+	if exists {
+		response, _ := handlers.ValidatorResponse([]interfaces.ErrorResponse{
+			interfaces.ErrorResponse{
+				Field:   "User.Name",
+				Message: "name existed",
+				Tag:     "",
+			},
+		})
+		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
 	database.DB.Create(&user)
@@ -64,10 +94,14 @@ func Login(c *fiber.Ctx) error {
 			"message": "incorrect password",
 		})
 	}
+	s, er := strconv.Atoi(initializers.Config.TokenExpiresIn)
+	if er == nil {
+		s = 60
+	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		// A usual scenario is to set the expiration time relative to the current time
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s) * time.Minute)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		NotBefore: jwt.NewNumericDate(time.Now()),
 		ID:        strconv.Itoa(int(user.ID)),
