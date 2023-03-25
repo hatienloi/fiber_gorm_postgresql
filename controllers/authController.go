@@ -94,7 +94,7 @@ func Login(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Select([]string{"password_hash", "email"}).Where("email = ?", data["email"]).First(&user)
+	database.DB.Select([]string{"id", "password_hash", "email"}).Where("email = ?", data["email"]).First(&user)
 
 	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(data["password"]))
 	if err != nil {
@@ -113,7 +113,7 @@ func Login(c *fiber.Ctx) error {
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s) * time.Minute)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		NotBefore: jwt.NewNumericDate(time.Now()),
-		ID:        user.Email,
+		ID:        user.ID.String(),
 	})
 
 	tokenString, err := claims.SignedString(constants.SigningKey)
@@ -149,7 +149,7 @@ func Me(c *fiber.Ctx) error {
 
 	var user models.User
 
-	if err := database.DB.Where("email = ?", claims.ID).First(&user).Error; err != nil {
+	if err := database.DB.Where("ID = ?", claims.ID).First(&user).Error; err != nil {
 		c.Status(fiber.StatusUnauthorized)
 		return c.JSON(fiber.Map{
 			"message": "unauthenticated",
